@@ -1,38 +1,83 @@
 <template>
   <div class="container">
-    <div class="loginBtn">
+    <div class="Btn">
+      <el-button class="logoutBtn" type="primary" round @click="toLogout">注销</el-button>
       <el-button type="primary" round @click="toLogin" v-show="!isLogin">登录</el-button>
+      <el-button class="manageBtn" type="primary" round @click="toManage" v-show="isLogin">管理</el-button>
     </div>
     <div class="search">
       <img src="../assets/image/icon.jpeg" alt="">
       <el-input v-model="searchWord" placeholder="瞅你咋地~" @keyup.enter.native="clickSearch">
-        <el-button type="primary" @click="clickSearch" slot="append" icon="el-icon-search"></el-button>
+        <el-button slot="append" type="primary" icon="el-icon-search" @click="clickSearch" />
       </el-input>
     </div>
     <div class="favorites">
-      <a href=""><img src="../assets/image/icon.jpeg" alt="" class="fav"></a>
-      <a href=""><img src="../assets/image/icon.jpeg" alt="" class="fav"></a>
-      <a href=""><img src="../assets/image/icon.jpeg" alt="" class="fav"></a>
-      <a href=""><img src="../assets/image/icon.jpeg" alt="" class="fav"></a>
-      <a href=""><img src="../assets/image/icon.jpeg" alt="" class="fav"></a>
-      <a href=""><img src="../assets/image/icon.jpeg" alt="" class="fav"></a>
+      <a v-for="item in collections" :key="item.cid" :href="item.link" target="_blank"><img :src="item.link + '/favicon.ico'" alt="" class="fav"></a>
+    </div>
+    <div class="container-beian">
+      <Record class="beian"></Record>
     </div>
   </div>
 </template>
 
 <script>
+import Record from './Record.vue'
 export default {
+  components: {
+    Record
+  },
   data: () => ({
     searchWord: '',
     searchEngine: '',
-    isLogin: false
+    isLogin: window.localStorage.getItem('token') !== null,
+    collections: [
+      {
+        cid: 1,
+        link: 'https://www.github.com'
+      },
+      {
+        cid: 2,
+        link: 'https://www.bilibili.com'
+      },
+      {
+        cid: 3,
+        link: 'https://blog.csdn.net'
+      }
+    ]
   }),
+  provide: function () {
+    return {
+      collections: this.collections
+    }
+  },
+  created () {
+    if (window.localStorage.getItem('token') !== null) {
+      this.getCollections()
+    }
+  },
   methods: {
     clickSearch () {
-      window.open('https://cn.bing.com/search?q=' + this.searchWord)
+      window.open('https://www.google.com/search?q=' + this.searchWord)
     },
     toLogin () {
       this.$router.push('/login')
+    },
+    toManage () {
+      this.$router.push('/manage')
+    },
+    toLogout () {
+      if (window.localStorage.getItem('token') === null) {
+        return this.$message.error('请登录')
+      }
+      window.localStorage.clear()
+      this.$message.success('注销成功')
+      setTimeout(function () {
+        location.reload()
+      }, 2000)
+    },
+    async getCollections () {
+      const { data: res } = await this.$http.post('/getLinks')
+      this.collections = res
     }
   }
 }
@@ -41,13 +86,28 @@ export default {
 <style lang="less" scoped>
 .container {
   height: 100%;
-  background-image: url("../assets/image/background.jpeg");
+  background-image: url("https://area.sinaapp.com/bingImg");
 
-  .loginBtn {
+  .Btn {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding-top: 10px;
     padding-right: 10px;
+    padding-left: 10px;
+
+    .logoutBtn {
+      opacity: 0.1;
+    }
+    .logoutBtn:hover {
+      opacity: 1;
+    }
+
+    .manageBtn {
+      opacity: 0.1;
+    }
+    .manageBtn:hover {
+      opacity: 1;
+    }
   }
 
   .search {
@@ -75,6 +135,15 @@ export default {
       width: 48px;
       border-radius: 50%;
     }
+  }
+  .container-beian {
+    width: 100%;
+    position: absolute;
+    bottom: 0px;
+  }
+  .beian {
+    width: 250px;
+    margin: 5px auto;
   }
 }
 </style>
